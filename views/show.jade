@@ -1,0 +1,22 @@
+append pageHeader
+    .page-header
+        h1 #{x('Viewing user')} #{user.username}
+
+append content
+    section
+        block table
+            table
+                thead
+                    tr
+                        th #{x('Username')}
+                        th #{x('Email')}
+                        block additionalFieldsHeader
+                        th(colspan=2) #{x('Actions')}
+                tr
+                    td
+                        =user.username
+                    td
+                        =user.email
+                    block additionalFields
+                    td
+                        a.btn(href="/user/edit/#{user._id}") #{x('Edit')}

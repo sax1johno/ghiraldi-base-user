@@ -1,0 +1,27 @@
+append content
+    section
+        block pageHeader
+            .page-header
+                h1 #{x('Editing user')} #{user.username}
+        form.form-horizontal(method="post", action="/user/create")
+            block form
+                block fields
+                    block username
+                        .control-group
+                            label.control-label(for='username') #{x('Username')}:
+                            .controls
+                                input#username(type="text", name="user[username]");
+                    block email
+                        .control-group
+                            label.control-label(for='email') #{x('Email')}:
+                            .controls
+                                input#email(type="text", name="user[email]");
+                    block password
+                        .control-group
+                            label.control-label(for='password') #{x('Password')}:
+                            .controls
+                                input#passwrd(type="password", name="user[password]");
+                block submitButton
+                    .control-group
+                        .controls
+                            input.btn.btn-primary(type="submit", value="#{x('Add')}")    

@@ -1,0 +1,29 @@
+extends ../../ghiraldi-base-admin/views/layout
+
+append header
+    .page-header
+        h1 #{x('Users')}
+            a.btn.btn-primary.float-right(href="/users/add") #{x('Add')}
+
+append content
+    section
+        h3 This should show users.
+        block table
+            table.table-striped.datatable
+                thead.align-left
+                    tr
+                        th #{x('Username')}
+                        th #{x('Email')}
+                        block additionalFieldsHeader
+                        th #{x('Actions')}
+                tbody
+                    - users.forEach(function(user){
+                        tr
+                            td
+                                a(href="/user/edit/#{user._id}") #{user.username}
+                            td= user.email
+                            block additionalFields
+                            td
+                                block actions
+                                    a(href='/user/#{user._id}').btn.btn-danger.destroy #{x('Delete')}
+                    -})

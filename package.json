@@ -1,0 +1,32 @@
+{
+  "name": "ghiraldi-base-user",
+  "description": "The ghiraldi user plugin is part of the ghiraldi base package of plugins. It provides the generalized concept of a user, which can be built upon to provide a robust user type.",
+  "tags": [
+    "ghiraldi",
+    "registry"
+  ],
+  "version": "0.0.1",
+  "author": {
+    "name": "John O'Connor",
+    "email": "sax1johno@gmail.com"
+  },
+  "dependencies": {
+    "mongoose": "*",
+    "underscore": "*",
+    "nodeunit": "*"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "github.com/sax1johno/ghiraldi-plugin-registry.git"
+  },
+  "_id": "ghiraldi-base-user@0.0.1",
+  "_from": "ghiraldi-base-user@0.0.1",
+  "readme": "ghiraldi-base-user\n========================\n\nThe ghiraldi user plugin is part of the ghiraldi base package of plugins. It provides the generalized concept of a user, which can be built upon to provide a robust user type.",
+  "dist": {
+    "shasum": "d954a7e75f43a819592271929dfd0bdb745436fd"
+  },
+  "ghiraldi": {
+      "name": "user"
+  }
+}
