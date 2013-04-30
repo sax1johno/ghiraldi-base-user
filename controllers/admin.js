@@ -1,8 +1,7 @@
 var logger = require('ghiraldi-simple-logger'),
     plugins = require('ghiraldi-plugin-registry').registry,
-    mongoose = require('mongoose'),
     logger = require('ghiraldi-simple-logger'),
-    User = mongoose.model('User'),
+    User = new require('ghiraldi-schema-registry')().getModel('User'),
     _ = require('underscore');
 
 function get(id, fn) {

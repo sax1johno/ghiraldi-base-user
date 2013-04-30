@@ -1,100 +1,97 @@
-var mongoose = require('mongoose'),
-    logger = require('ghiraldi-simple-logger');
-
-// require('../models/User.js');
-var User = mongoose.model('User');
-var _ = require('underscore');
-
-function get(id, fn) {
-    User.findById(id, fn);
-}
+var _ = require('underscore'),
+    logger = require('ghiraldi-simple-logger'),
+    plugins = require('ghiraldi-plugin-registry').registry,
+    models = new require('ghiraldi-schema-registry')(),
+    User = models.getModel('User'),
+    Role = models.getModel('Role');
 
 var index = function(req, res){
-    logger.log('debug', 'In the user index');
-    User.find({}, function(err, users) {
+    res.send("in the index function of user");
+};
+
+var login = function(req, res) {
+    res.render(plugins.get('user').views.login, {});
+};
+
+/**
+ * Uses username and password authentication with user info 
+ * stored in mongoose to authenticate the user and add
+ * the user to the session if successful.
+ **/
+var processLogin = function(req, res) {
+    var loginInfo = req.body.loginInfo;
+    User.findOne({username: loginInfo.username}, function(err, doc) {
         if (err) {
-            logger.log('error', err);
-            res.send(err);
+            req.flash('error', 'Unable to authenticate: username or password is invalid');
+            res.redirect('back');
         } else {
-            logger.log('debug', 'Users array is ' + JSON.stringify(users));
-            // res.render('../views/index.jade', {users: users, title: 'Users', selected: 'users'});
-            res.send(users);
-        }
-    });
-};
-
-var add = function(req, res) {
-    // res.render('../views/add.jade', {title: 'Add a User', selected: 'users'});
-    res.send({'message': 'Add page for users. This should be overridden'});
-};
-
-var show = function(req, res, next){
-    get(req.params.id, function(err, user){
-        if (err) return next(err);
-        // res.render('../views/show.jade', {user: user, title: 'User View', selected: 'users'});
-        res.send(user);
-    });
-};
-
-var edit = function(req, res, next){
-    get(req.params.id, function(err, user) {
-        if (err) return next(err);
-        // res.render('../views/edit.jade', {user: user, title: 'Edit User', selected: 'users'});
-        res.send({'message': 'Edit page for a user.  This should be overridden.'});
-    });
-};
-
-var update = function(req, res, next){
-    var thisUser = req.body.user;
-    var id = req.params.id;
-    get(id, function(err, user) {
-        if (err) {
-            req.session.messages = {'error': 'Unable to update: ' + err};
-            return next(err);
-        }
-        var thisUser = req.body.user;
-        _.extend(user, thisUser);
-        user.save(function(error) {
-            if (!error) {
-                res.send({'success': 'Successfully updated user  ' + user.username});
-            } else {
-                res.send({'error': 'Unable to update: ' + error});
-            }
-        });
-    }
-    );
-};
-
-var create = function(req, res, next) {
-        var thisUser = req.body.user;
-        var addedUser = new User();
-        _.extend(addedUser, thisUser);
-        addedUser.save(function(error) {
-            if (!error) {
-                req.session.messages = {'success': 'Successfully created new user  ' + addedUser.username};
-            } else {
-                req.session.messages = {'error': 'Unable to create: ' + error};
-            }
-        res.redirect('/users');
-        });
-}; 
-
-var destroy =  function(req, res, next) {
-    var id = req.params.id;
-    get(id, function(err, user) {
-        if (err) return next(err);
-        if (user.username == 'admin') {
-            req.session.messages = {'error': 'Unable to delete the root admin user'};
-            return res.redirect('back');
-        }
-        var deleted = user;
-        user.remove(function(err) {
-            if (!err) {
-                req.session.messages = {'success': 'Successfully deleted  ' + deleted.username};
+            if (!doc) {
+                req.flash('error', 'Unable to authenticate: username or password is invalid');
                 res.redirect('back');
+            } else {
+                if (loginInfo.password) {
+                    if (doc.authenticate(loginInfo.password)) {
+                        req.session.user = doc;
+                        req.flash('success', 'You are now logged in as ' + doc.username);
+                        Role.findById(doc.role, function(err, role) {
+                            req.session.role = role;
+                            res.redirect('/');
+                        });
+                    } else {
+                        req.flash('error', 'Unable to authenticate: username or password is invalid');
+                        res.redirect('back');
+                    }
+                }
             }
-        });
-    });
+        }
+    });    
+};
+
+var logout = function(req, res) {
+    delete req.session.user;
+    delete req.session.role;
+    req.flash('info', 'You have been logged out.');
+    res.redirect('/');
+};
+
+var signup = function(req, res) {
+    res.render(plugins.get('user').views.signup, {});
+};
+
+var signup_process = function(req, res) {
+    // TODO: Add stub signup code.
+    req.flash('error', 'Signup has not been implemented yet.');
+    res.redirect('back');
+};
+
+module.exports = {
+    routes: [
+        { 
+            verb: 'get',
+            route: '/login',
+            method: index
+        },
+        { 
+            verb: 'post',
+            route: '/login/process',
+            method: processLogin
+        },
+        {
+            verb: 'get',
+            route: '/logout',
+            method: logout
+        },
+        {
+            verb: 'get',
+            route: '/signup',
+            method: signup
+        },
+        {
+            verb: 'post',
+            route: '/signup/process',
+            method: signup_process
+        }
+    ]
 };
 
 module.exports = {
@@ -105,35 +102,35 @@ module.exports = {
         verb: 'get',
         route: '/user'
     },
-    {
-        method: show,
-        verb: 'get',
-        route: '/user/show/:id.:format?'
-    },
-    {
-        method: add,
-        verb: 'get',
-        route: '/user/add'
-    },
-    {
-        method: create,
-        verb: 'post',
-        route: '/user/create'
-    },
-    {
-        method: edit,
-        verb: 'get',
-        route: '/user/edit/:id'
-    },
-    {
-        method: update,
-        verb: 'put',
-        route: '/user/:id'
-    },
-    {
-        method: destroy,
-        verb: 'del',
-        route: '/user/:id'
-    }
+    // {
+    //     method: show,
+    //     verb: 'get',
+    //     route: '/user/show/:id.:format?'
+    // },
+    // {
+    //     method: add,
+    //     verb: 'get',
+    //     route: '/user/add'
+    // },
+    // {
+    //     method: create,
+    //     verb: 'post',
+    //     route: '/user/create'
+    // },
+    // {
+    //     method: edit,
+    //     verb: 'get',
+    //     route: '/user/edit/:id'
+    // },
+    // {
+    //     method: update,
+    //     verb: 'put',
+    //     route: '/user/:id'
+    // },
+    // {
+    //     method: destroy,
+    //     verb: 'del',
+    //     route: '/user/:id'
+    // }
   ]
 };
