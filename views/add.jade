@@ -1,28 +1,24 @@
+extends admin/layout
+
 append content
     section
-        append pageHeader
+        append header
             .page-header
-                h1 #{x('Create a new User')}
-        form.form-horizontal(method="post", action="/user/#{user._id}")
-            input(type="hidden", name="_method", value="put")
+                h1 Create a new user.
+        form.form-horizontal(method="post", action="/admin/user")
             block form
                 block fields
                     block username
                         .control-group
-                            label.control-label(for='username') #{x('Username')}:
+                            label.control-label(for='username') Username:
                             .controls
                                 input#username(type="text", name="user[username]");
                     block email
                         .control-group
-                            label.control-label(for='email') #{x('Email')}:
+                            label.control-label(for='email') Email:
                             .controls
                                 input#email(type="text", name="user[email]");
-                    block password
-                        .control-group
-                            label.control-label(for='password') #{x('Password')}:
-                            .controls
-                                input#passwrd(type="password", name="user[password]");
                 block submitButton
                     .control-group
                         .controls
-                            input.btn.btn-primary(type="submit", value="#{x('Update')}")
+                            input.btn.btn-primary(type="submit", value="Add")

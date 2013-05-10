@@ -1,29 +1,48 @@
-extends ../../ghiraldi-base-admin/views/layout
+extends admin/layout
 
-append header
-    .page-header
-        h1 #{x('Users')}
-            a.btn.btn-primary.float-right(href="/users/add") #{x('Add')}
-
+append userScripts
+    script(type="text/javascript").
+        $('.destroy').live('click', function(e) {
+            e.preventDefault();
+            if ($(this).is('.disabled')) return;
+            if (confirm('Are you sure you want to delete?')) {
+                var element = $(this),
+                    form = $('<form></form>');
+                form
+                    .attr({
+                        method: 'POST',
+                        action: element.attr('href')
+                    })
+                    .hide()
+                    .append('<input type="hidden" />')
+                    .find('input')
+                    .attr({
+                        'name': '_method',
+                        'value': 'delete'
+                    })
+                    .end()
+                    .submit();
+            }
+        });
 append content
     section
-        h3 This should show users.
-        block table
-            table.table-striped.datatable
-                thead.align-left
-                    tr
-                        th #{x('Username')}
-                        th #{x('Email')}
-                        block additionalFieldsHeader
-                        th #{x('Actions')}
-                tbody
-                    - users.forEach(function(user){
-                        tr
-                            td
-                                a(href="/user/edit/#{user._id}") #{user.username}
-                            td= user.email
-                            block additionalFields
-                            td
-                                block actions
-                                    a(href='/user/#{user._id}').btn.btn-danger.destroy #{x('Delete')}
-                    -})
+        h1 User index
+        a.btn(href="/admin/user/add") Add a new user
+        table
+            thead
+                tr
+                    th Username
+                    th Email
+            - if (users && users.length > 0)
+                - each user in users
+                    tr(id='user_#{user.id}')
+                        td(id='user#{user.id}_username') 
+                            a(href="/admin/user/show/#{user.id}") #{user.username}
+                        td(id='user#{user.id}_email') #{user.email}
+                        td(id='user#{user.id}_delete')
+                            form(method="post", action="/admin/user/#{user._id}")
+                                input(type="hidden", name="_method", value="delete")        
+                                input.btn.btn-primary(type="submit", value="Delete")
+            - else
+                tr
+                    td No users found.

@@ -2,47 +2,73 @@ var logger = require('ghiraldi-simple-logger'),
     plugins = require('ghiraldi-plugin-registry').registry,
     logger = require('ghiraldi-simple-logger'),
     User = new require('ghiraldi-schema-registry')().getModel('User'),
+    userPlugin = plugins.get('user'),
+    util = require('util'),
     _ = require('underscore');
 
 function get(id, fn) {
-    User.findById(id, fn);
+    User.find(id, fn);
 }
 
 var index = function(req, res){
-    res.send('/admin/user');
-    // User.find({}).exec(function(err, users) {
-    //     if (err) {
-    //         logger.log('error', err);
-    //         res.send(err);
-    //     } else {
-    //         logger.log('debug', 'test array is ' + JSON.stringify(users));
-    //         res.render(plugins.get('user').views['index'], {users: users, title: 'Users'});
-    //         // res.render('../views/index.jade', {users: users, title: 'Users', selected: 'users'});
-    //         // res.render(plugins.get('admin').views., {users: users, title: 'Users', selected: 'users'});
-    //         // res.send(users);
-    //     }
-    // });
-    // res.render(plugins.get('admin').views['index'], {});
+    User.all(function(err, users) {
+        logger.log('trace', util.inspect(users));
+        if (err) {
+            logger.log('error', err);
+            res.send(err);
+        } else {
+            logger.log('debug', 'user array is ' + users);
+            userPlugin.render('index', {users: users}, function(err, html) {
+                logger.log('trace', 'html = ' + html);
+                if (!err) {
+                    res.send(html);
+                } else {
+                    res.send('error: ' + err);
+                }
+            });
+        }
+    });
 };
 
 var add = function(req, res) {
-    // res.render('../views/add.jade', {title: 'Add a User', selected: 'users'});
-    res.send({'message': 'Add page admin for users. This should be overridden'});
+    userPlugin.render('add', {}, function(err, html) {
+        if (err) {
+            logger.log('error', err);
+            res.send(err);
+        } else {
+            logger.log('trace', html);
+            res.send(html);            
+        }
+    });
 };
 
 var show = function(req, res, next){
-    get(req.params.id, function(err, user){
+    User.find(req.params.id, function(err, user){
         if (err) return next(err);
         // res.render('../views/show.jade', {user: user, title: 'User View', selected: 'users'});
-        res.send(user);
+        userPlugin.render('show', {user: user}, function(err, html) {
+            if (!err) {
+                res.send(html);
+            } else {
+                res.send(err);
+            }
+        });
+        // res.send(user);
     });
 };
 
 var edit = function(req, res, next){
     get(req.params.id, function(err, user) {
-        if (err) return next(err);
-        // res.render('../views/edit.jade', {user: user, title: 'Edit User', selected: 'users'});
-        res.send({'message': 'Edit page for a user.  This should be overridden.'});
+        if (err) {
+            return res.send(err);
+        }
+        userPlugin.render('edit', {user: user}, function(err, html) {
+            if (!err) {
+                res.send(html);
+            } else {
+                res.send(err);
+            }
+        });
     });
 };
 
@@ -58,9 +84,11 @@ var update = function(req, res, next){
         _.extend(user, thisUser);
         user.save(function(error) {
             if (!error) {
-                res.send({'success': 'Successfully updated user  ' + user.username});
+                req.flash('success', 'Successfully updated user ' + user.username);
+                res.redirect('back');
             } else {
-                res.send({'error': 'Unable to update: ' + error});
+                req.flash('error', 'Unable to update: ' + error);
+                res.redirect('back');
             }
         });
     }
@@ -69,15 +97,14 @@ var update = function(req, res, next){
 
 var create = function(req, res, next) {
         var thisUser = req.body.user;
-        var addedUser = new User();
-        _.extend(addedUser, thisUser);
-        addedUser.save(function(error) {
-            if (!error) {
-                req.session.messages = {'success': 'Successfully created new user  ' + addedUser.username};
+        logger.log("user = " + thisUser);
+        User.create(thisUser, function(err, user) {
+            if (!err) {
+                req.session.messages = {'success': 'Successfully created new user  ' + thisUser.username};
             } else {
-                req.session.messages = {'error': 'Unable to create: ' + error};
+                req.session.messages = {'error': 'Unable to create: ' + err};
             }
-        res.redirect('/users');
+            res.redirect('/admin/user');
         });
 }; 
 
@@ -90,7 +117,7 @@ var destroy =  function(req, res, next) {
             return res.redirect('back');
         }
         var deleted = user;
-        user.remove(function(err) {
+        user.destroy(function(err) {
             if (!err) {
                 req.session.messages = {'success': 'Successfully deleted  ' + deleted.username};
                 res.redirect('back');
@@ -120,7 +147,7 @@ module.exports = {
     {
         method: create,
         verb: 'post',
-        route: '/admin/user/create'
+        route: '/admin/user'
     },
     {
         method: edit,

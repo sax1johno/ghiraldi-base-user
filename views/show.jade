@@ -1,6 +1,8 @@
-append pageHeader
+extends admin/layout
+
+append header
     .page-header
-        h1 #{x('Viewing user')} #{user.username}
+        h1 Viewing User #{user.username}
 
 append content
     section
@@ -8,10 +10,10 @@ append content
             table
                 thead
                     tr
-                        th #{x('Username')}
-                        th #{x('Email')}
+                        th Username
+                        th Email
                         block additionalFieldsHeader
-                        th(colspan=2) #{x('Actions')}
+                        th(colspan=2) Actions
                 tr
                     td
                         =user.username
@@ -19,4 +21,4 @@ append content
                         =user.email
                     block additionalFields
                     td
-                        a.btn(href="/user/edit/#{user._id}") #{x('Edit')}
+                        a.btn(href="/admin/user/edit/#{user.id}") Edit
